@@ -20,14 +20,20 @@ target_sources(${PROJECT_NAME}
         PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/kset/kset.cpp
         ${CMAKE_CURRENT_LIST_DIR}/kset/kset.h
+        ${CMAKE_CURRENT_LIST_DIR}/kset/kset_node.h
+        ${CMAKE_CURRENT_LIST_DIR}/kset/kset_node.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/kset/errors.h
+        ${CMAKE_CURRENT_LIST_DIR}/kset/packed_ptr.h
 )
 
 message("project name: ${PROJECT_NAME}")
 
+find_package(gtest REQUIRED HINTS ${CMAKE_CURRENT_LIST_DIR}/cmake)
 target_include_directories(${PROJECT_NAME}
     PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/kset
+    ${GTEST_INCLUDE_DIR}
     )
 
 message("Adding test dir")

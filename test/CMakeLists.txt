@@ -1,7 +1,9 @@
 
 # Download and unpack googletest at configure time
 
-find_package(gtest REQUIRED HINTS ${CMAKE_CURRENT_LIST_DIR}/../cmake)
+if(NOT GTEST_FOUND)
+  find_package(gtest REQUIRED HINTS ${CMAKE_CURRENT_LIST_DIR}/../cmake)
+endif()
 
 file(GLOB TEST_SOURCES "${CMAKE_CURRENT_LIST_DIR}/*.cpp")
 add_executable(intset_test "")

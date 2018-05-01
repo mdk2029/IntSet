@@ -1,15 +1,19 @@
 #include "gtest/gtest.h"
 #include <kset/kset.h>
+#include <kset/packed_ptr.h>
 #include <boost/scope_exit.hpp>
 #include <memory>
 
+namespace Kset {
+
 static const unsigned max_values_in_node = Kset::Node::capacity;
 
-TEST(NodeTest, construction) {
+GTEST_TEST(NodeTest, construction) {
     auto un = std::make_unique<Kset::Node>();
     Kset::Node* n = un.get();
-    ASSERT_EQ(n->children_, nullptr);
-    ASSERT_EQ(n->numValues_, 0);
+    ASSERT_EQ(sizeof(Node), 64);
+    ASSERT_EQ(n->children(), nullptr);
+    ASSERT_EQ(n->numValues(), 0);
     ASSERT_EQ((int64_t)n % 64, 0);
 
 #ifdef USE_AVX2
@@ -20,7 +24,7 @@ TEST(NodeTest, construction) {
 
 }
 
-TEST(NodeTest, basic_insertion) {
+GTEST_TEST(NodeTest, basic_insertion) {
     auto un = std::make_unique<Kset::Node>();
     Kset::Node* n = un.get();
 
@@ -36,7 +40,7 @@ TEST(NodeTest, basic_insertion) {
     }
 }
 
-TEST(NodeTest, local_insertion) {
+GTEST_TEST(NodeTest, local_insertion) {
     auto un = std::make_unique<Kset::Node>();
     Kset::Node* n = un.get();
 
@@ -48,8 +52,8 @@ TEST(NodeTest, local_insertion) {
         ASSERT_EQ(idx,(int)i);
     }
 
-    ASSERT_EQ(n->children_, nullptr);
-    ASSERT_EQ(n->numValues_, max_values_in_node);
+    ASSERT_EQ(n->children(), nullptr);
+    ASSERT_EQ(n->numValues(), max_values_in_node);
 
     int idx{0};
     bool inserted{true};
@@ -75,7 +79,7 @@ TEST(NodeTest, local_insertion) {
 
 }
 
-TEST(NodeTest, insertion) {
+GTEST_TEST(NodeTest, insertion) {
     auto un = std::make_unique<Kset::Node>();
     Kset::Node* n = un.get();
 
@@ -92,18 +96,18 @@ TEST(NodeTest, insertion) {
 
     std::tie(dest,idx,inserted) = insert(n,50);
     ASSERT_TRUE(inserted);
-    ASSERT_EQ(dest, n->children_+1);
+    ASSERT_EQ(dest, n->children()+1);
     ASSERT_EQ(idx, 0);
 
-    ASSERT_NE(n->children_,nullptr);
-    ASSERT_EQ(n->children_->numValues_, 0);
+    ASSERT_NE(n->children(),nullptr);
+    ASSERT_EQ(n->children()->numValues(), 0);
 
-    ASSERT_EQ(dest->children_, nullptr);
-    ASSERT_EQ(dest->numValues_, 1);
+    ASSERT_EQ(dest->children(), nullptr);
+    ASSERT_EQ(dest->numValues(), 1);
 
 }
 
-TEST(NodeTest, find) {
+GTEST_TEST(NodeTest, find) {
     auto un = std::make_unique<Kset::Node>();
     Kset::Node* n = un.get();
 
@@ -123,15 +127,15 @@ TEST(NodeTest, find) {
     bool found{false};
     std::tie(node,idx,found) = find(n,50);
     ASSERT_EQ(found,true);
-    ASSERT_EQ(node->numValues_, 1);
+    ASSERT_EQ(node->numValues(), 1);
 
     std::tie(node,idx,found) = find(n,55);
     ASSERT_EQ(found,false);
     ASSERT_EQ(idx, 1);
-    ASSERT_EQ(node->numValues_, 1);
+    ASSERT_EQ(node->numValues(), 1);
 }
 
-TEST(NodeTest, insertion_find) {
+GTEST_TEST(NodeTest, insertion_find) {
     auto un = std::make_unique<Kset::Node>();
     Kset::Node* n = un.get();
     std::set<int64_t> insertedVals;
@@ -154,4 +158,20 @@ TEST(NodeTest, insertion_find) {
     }
 }
 
+GTEST_TEST(PackedWord, PackedWordTest) {
+    Kset::PackedPtr ptr;
+
+    ASSERT_EQ(ptr.packedWord(), 0);
+    ptr.setData(0x42);
+    ASSERT_EQ(ptr.getData(), 0x42);
+    ASSERT_EQ(ptr.packedWord(), 0x0042000000000000);
+
+    auto un = std::make_unique<Kset::Node>();
+    Kset::Node* n = un.get();
+    ptr.setPtr(n);
+    ASSERT_EQ(ptr.getData(), 0x42);
+    ASSERT_EQ(ptr.getPtr<Kset::Node>(), n);
+}
+
+}
 
