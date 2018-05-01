@@ -3,8 +3,8 @@
 #include <cstdint>
 #include "errors.h"
 
-// In x86_64, top 16 bits of a 64 bit pointer are not used and can
-// be used to store other data.
+// In x86_64, top 16 bits of a 64 bit pointer are not used.
+// So we can steal these bits and store other data in them
 namespace Kset
 {
 

@@ -5,10 +5,8 @@ project(intset LANGUAGES CXX)
 
 string(REPLACE "-O2" "-O3" newFlags ${CMAKE_CXX_FLAGS_RELEASE})
 set(CMAKE_CXX_FLAGS_RELEASE "${newFlags}")
-message("CMAKE_CXX_FLAGS_RELEASE=${CMAKE_CXX_FLAGS_RELEASE}")
 
-#if(DEFINED ENV{USE_AVX2})
-if(false)
+if(DEFINED ENV{USE_AVX2})
     message("Using AVX2 instructions")
     add_compile_options("-march=native")
     add_definitions(-DUSE_AVX2)
@@ -26,8 +24,6 @@ target_sources(${PROJECT_NAME}
         ${CMAKE_CURRENT_LIST_DIR}/kset/packed_ptr.h
 )
 
-message("project name: ${PROJECT_NAME}")
-
 find_package(gtest REQUIRED HINTS ${CMAKE_CURRENT_LIST_DIR}/cmake)
 target_include_directories(${PROJECT_NAME}
     PUBLIC
@@ -38,5 +34,7 @@ target_include_directories(${PROJECT_NAME}
 
 message("Adding test dir")
 add_subdirectory("test")
+
+message("Adding bench dir")
 add_subdirectory("bench")
 

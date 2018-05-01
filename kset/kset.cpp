@@ -47,4 +47,45 @@ std::tuple<Node*, int, bool> insert(Node* node, int64_t val)  {
     return {node,idx,inserted};
 }
 
+std::tuple<Node*,int, int64_t> find_min(Node* node) {
+
+    ASSERT(node->numValues() > 0);
+
+    while(node->children() && node->children()->numValues()) {
+        node = node->children();
+    }
+
+    return {node, 0, node->at(0)};
+}
+
+std::tuple<Node*,int, int64_t> successor(Node* node, int loc) {
+
+    ASSERT(node->numValues() > loc);
+
+    if(node->children()) {
+        Node* potentialDescendent = node->children() + loc + 1;
+        if(potentialDescendent->numValues() > 0) {
+            return find_min(potentialDescendent);
+        }
+    }
+
+    if(node->numValues() > loc+1) {
+        return {node, loc+1, node->at(loc+1)};
+    }
+
+    //will have to go up to the parent
+    int64_t val = node->at(loc);
+    Node* parent = node->parent();
+    while(parent) {
+        ASSERT(parent->numValues());
+        for(int i = 0; i < parent->numValues(); i++) {
+            if(parent->at(i) > val) {
+                return {parent,i,parent->at(i)};
+            }
+        }
+        parent = parent->parent();
+    }
+
+    return {nullptr, -1, -1};
+}
 }

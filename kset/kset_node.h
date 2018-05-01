@@ -6,7 +6,6 @@
 #include <limits>
 #include "errors.h"
 #include "packed_ptr.h"
-#include "gtest/gtest_prod.h"
 
 #ifdef USE_AVX2
 #include <immintrin.h>
@@ -15,8 +14,6 @@
 namespace Kset {
 
 class alignas(64) Node {
-
-    FRIEND_TEST(NodeTest, basic_insertion);
 
   public:
     static constexpr unsigned capacity = 6;
@@ -30,6 +27,10 @@ class alignas(64) Node {
   public:
     Node* children() const {
         return children_;
+    }
+
+    Node* parent() const {
+        return parent_.getPtr<Node>();
     }
 
     uint16_t numValues() const  {
@@ -48,6 +49,15 @@ class alignas(64) Node {
     void expand() {
         ASSERT(!children_);
         children_ = new Node[capacity+1]{};
+        for(int i = 0; i <= capacity; i++) {
+            Node* d = children_ + i;
+            d->parent_.setPtr(this);
+        }
+    }
+
+    int64_t at(int idx) const {
+        ASSERT(idx >= 0 && idx < capacity);
+        return vals_[idx];
     }
 
     std::tuple<int,bool> insert(int64_t val) {
@@ -111,8 +121,8 @@ std::tuple<int,bool> Node::find(int64_t val) const {
     constexpr int64_t maxint64 = std::numeric_limits<int64_t>::max();
     __m256i valsp = _mm256_load_si256(reinterpret_cast<const __m256i*>(this));
     __m256i targetp = {maxint64, maxint64,val,val};
-    __m256i maskeqp = _mm256_cmpgt_epi64(valsp,targetp);
-    int mask = _mm256_movemask_epi8(maskeqp);
+    __m256i maskgtp = _mm256_cmpgt_epi64(valsp,targetp);
+    int mask = _mm256_movemask_epi8(maskgtp);
 
     if(mask != 0) {
         //we have found the value/branching point in the first 32 bytes of the cache line
@@ -126,8 +136,8 @@ std::tuple<int,bool> Node::find(int64_t val) const {
         //we need to look in the trailing 32 bytes of the cache line.
         valsp = _mm256_load_si256(reinterpret_cast<const __m256i*>(&vals_[2]));
         targetp = _mm256_set1_epi64x(val);
-        maskeqp = _mm256_cmpgt_epi64(valsp,targetp);
-        int mask = _mm256_movemask_epi8(maskeqp);
+        maskgtp = _mm256_cmpgt_epi64(valsp,targetp);
+        int mask = _mm256_movemask_epi8(maskgtp);
 
         unsigned trailingZeroes = mask ? __builtin_ctz(static_cast<uint32_t>(mask))
                                        : 32;

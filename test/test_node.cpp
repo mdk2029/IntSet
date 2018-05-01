@@ -8,6 +8,11 @@ namespace Kset {
 
 static const unsigned max_values_in_node = Kset::Node::capacity;
 
+
+/////////////////////////////////////////////////////////////////////////////////////
+/// \brief Tests for Node operations
+/////////////////////////////////////////////////////////////////////////////////////
+
 GTEST_TEST(NodeTest, construction) {
     auto un = std::make_unique<Kset::Node>();
     Kset::Node* n = un.get();
@@ -18,7 +23,7 @@ GTEST_TEST(NodeTest, construction) {
 
 #ifdef USE_AVX2
     for(unsigned i = 0; i < max_values_in_node; i++) {
-        ASSERT_EQ(n->vals_[i] , std::numeric_limits<int64_t>::max());
+        ASSERT_EQ(n->at(i) , std::numeric_limits<int64_t>::max());
     }
 #endif
 
@@ -36,7 +41,7 @@ GTEST_TEST(NodeTest, basic_insertion) {
     }
 
     for(unsigned i = 0; i < max_values_in_node; i++) {
-        ASSERT_EQ(n->vals_[i] , static_cast<int64_t>(i));
+        ASSERT_EQ(n->at(i) , static_cast<int64_t>(i));
     }
 }
 
@@ -79,7 +84,12 @@ GTEST_TEST(NodeTest, local_insertion) {
 
 }
 
-GTEST_TEST(NodeTest, insertion) {
+/////////////////////////////////////////////////////////////////////////////////////
+/// \brief Tests for Kset insertion/find/find_min/successor
+/////////////////////////////////////////////////////////////////////////////////////
+
+
+GTEST_TEST(KsetTest, insertion) {
     auto un = std::make_unique<Kset::Node>();
     Kset::Node* n = un.get();
 
@@ -107,7 +117,7 @@ GTEST_TEST(NodeTest, insertion) {
 
 }
 
-GTEST_TEST(NodeTest, find) {
+GTEST_TEST(KsetTest, find) {
     auto un = std::make_unique<Kset::Node>();
     Kset::Node* n = un.get();
 
@@ -135,7 +145,7 @@ GTEST_TEST(NodeTest, find) {
     ASSERT_EQ(node->numValues(), 1);
 }
 
-GTEST_TEST(NodeTest, insertion_find) {
+GTEST_TEST(KsetTest, insertion_find) {
     auto un = std::make_unique<Kset::Node>();
     Kset::Node* n = un.get();
     std::set<int64_t> insertedVals;
@@ -157,6 +167,94 @@ GTEST_TEST(NodeTest, insertion_find) {
         ASSERT_EQ(isInInsertedVals,found);
     }
 }
+
+GTEST_TEST(KsetTest, find_min) {
+
+    auto un = std::make_unique<Kset::Node>();
+    Kset::Node* n = un.get();
+
+    for(unsigned i = 0; i < max_values_in_node; i++) {
+        n->insert(i * 100);
+    }
+
+    Node* dest{nullptr};
+    int loc{-1};
+    int64_t val{1000000};
+    std::tie(dest,loc,val) = find_min(n);
+    ASSERT_EQ(dest, n);
+    ASSERT_EQ(val, 0);
+
+    insert(n, -100);
+    insert(n, -200);
+    insert(n, -300);
+    insert(n, -400);
+    insert(n, -500);
+    insert(n, -600);
+
+    std::tie(dest,loc,val) = find_min(n);
+    ASSERT_EQ(dest, n->children());
+    ASSERT_EQ(val, -600);
+}
+
+GTEST_TEST(KsetTest, successor) {
+
+    auto un = std::make_unique<Kset::Node>();
+    Kset::Node* n = un.get();
+
+    for(unsigned i = 0; i < max_values_in_node; i++) {
+        n->insert(i * 100);
+    }
+
+    //successor is in same node
+    Node* dest{nullptr};
+    int loc{-1};
+    int64_t val{1000000};
+    std::tie(dest,loc,val) = successor(n,0);
+    ASSERT_EQ(dest, n);
+    ASSERT_EQ(val, 100);
+    ASSERT_EQ(loc, 1);
+
+    std::tie(dest,loc,val) = successor(n,4);
+    ASSERT_EQ(dest, n);
+    ASSERT_EQ(val, 500);
+    ASSERT_EQ(loc, 5);
+
+    std::tie(dest,loc,val) = successor(n,5);
+
+    //successor is in child node
+    insert(n, 250);
+    insert(n, 255);
+
+    std::tie(dest,loc,val) = successor(n,2);
+    ASSERT_EQ(dest, n->children()+3);
+    ASSERT_EQ(val, 250);
+    ASSERT_EQ(loc, 0);
+
+    //successor is in parent node
+    auto *d = dest;
+    std::tie(d,loc,val) = successor(dest,1);
+    ASSERT_EQ(val,300);
+    ASSERT_EQ(d, n);
+    ASSERT_EQ(loc,3);
+
+    //successor is in grandparent node
+    insert(n,260);
+    insert(n,265);
+    insert(n,270);
+    insert(n,275);
+
+    //next insert will cause 3rd node to be added
+    std::tie(dest,std::ignore, std::ignore) = insert(n,280);
+
+    std::tie(d,loc,val) = successor(dest,0);
+    ASSERT_EQ(val,300);
+    ASSERT_EQ(d, n);
+    ASSERT_EQ(loc,3);
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+/// \brief Tests for PackedPtr
+/////////////////////////////////////////////////////////////////////////////////////
 
 GTEST_TEST(PackedWord, PackedWordTest) {
     Kset::PackedPtr ptr;
