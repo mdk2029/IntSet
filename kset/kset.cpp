@@ -3,18 +3,17 @@
 
 namespace Kset {
 
-//returns destination node and position within the node
-std::tuple<Node*, int, bool> find(Node* node, int64_t val) {
+std::tuple<Node*, NodeIdx_t, bool> find(Node* node, val_t val) {
 
     ASSERT_IMPLIES( (node->numValues() < node->capacity), !node->children() );
 
-    int idx{-1};
+    NodeIdx_t idx{invalid_idx};
     bool found{false};
     std::tie(idx,found) = node->find(val);
 
     if(!found) {
         //find in descendent block
-        //<descendent ptr><8 bytes reserved><int0, int1, ...., int11>
+        //<descendent ptr><parent ptr><int0, int1, ...., int5>
         //<so if say int1 is greater than our val,then we need the block for
         //vals between int0 and int1 which would be at descendentptr + 1
         if(node->children()) {
@@ -25,11 +24,11 @@ std::tuple<Node*, int, bool> find(Node* node, int64_t val) {
     return {node,idx,found};
 }
 
-std::tuple<Node*, int, bool> insert(Node* node, int64_t val)  {
+std::tuple<Node*, NodeIdx_t, bool> insert(Node* node, val_t val)  {
 
     ASSERT_IMPLIES( (node->numValues() < node->capacity), !node->children() );
 
-    int idx{-1};
+    NodeIdx_t idx{invalid_idx};
     bool inserted{false};
     bool found{false};
 
@@ -47,7 +46,7 @@ std::tuple<Node*, int, bool> insert(Node* node, int64_t val)  {
     return {node,idx,inserted};
 }
 
-std::tuple<Node*,int, int64_t> find_min(Node* node) {
+std::tuple<Node*,NodeIdx_t,val_t> find_min(Node* node) {
 
     ASSERT(node->numValues() > 0);
 
@@ -58,10 +57,11 @@ std::tuple<Node*,int, int64_t> find_min(Node* node) {
     return {node, 0, node->at(0)};
 }
 
-std::tuple<Node*,int, int64_t> successor(Node* node, int loc) {
+std::tuple<Node*,NodeIdx_t,val_t> successor(Node* node, NodeIdx_t loc) {
 
     ASSERT(node->numValues() > loc);
 
+    //First look in the potential child node
     if(node->children()) {
         Node* potentialDescendent = node->children() + loc + 1;
         if(potentialDescendent->numValues() > 0) {
@@ -69,23 +69,25 @@ std::tuple<Node*,int, int64_t> successor(Node* node, int loc) {
         }
     }
 
+    //Next look in the same node
     if(node->numValues() > loc+1) {
         return {node, loc+1, node->at(loc+1)};
     }
 
-    //will have to go up to the parent
-    int64_t val = node->at(loc);
+    //will have to go up to the parent. May have to keep going up the chain
+    //till we find an ancestor with a value greater than our val
+    val_t val = node->at(loc);
     Node* parent = node->parent();
     while(parent) {
         ASSERT(parent->numValues());
-        for(int i = 0; i < parent->numValues(); i++) {
+        for(NodeIdx_t i = 0; i < parent->numValues(); i++) {
             if(parent->at(i) > val) {
                 return {parent,i,parent->at(i)};
             }
         }
         parent = parent->parent();
     }
-
-    return {nullptr, -1, -1};
+    return {nullptr, invalid_idx, -1};
 }
+
 }

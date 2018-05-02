@@ -4,6 +4,8 @@
 
 namespace Kset {
 
+/// We use posix_memalign to guarantee alignment.
+/// Todo: Use a pool of nodes
 void* Node::operator new[](size_t size) {
     void* memptr = nullptr;
     if(int ret = posix_memalign(&memptr, cache_line_size, size) != 0) {

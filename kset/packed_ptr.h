@@ -3,10 +3,18 @@
 #include <cstdint>
 #include "errors.h"
 
-// In x86_64, top 16 bits of a 64 bit pointer are not used.
-// So we can steal these bits and store other data in them
+/**
+  * \ingroup Kset
+  */
+
 namespace Kset
 {
+
+/**
+ * @brief The PackedPtr class
+ * In x86_64, top 16 bits of a 64 bit pointer are not used.
+ * So we can steal these bits and store other data in them
+ */
 
 class PackedPtr {
     std::uint64_t packedWord_{0};
@@ -37,5 +45,6 @@ public:
     }
 };
 
-static_assert(sizeof(PackedPtr) == sizeof(void *), "unexpected sizeof(PackedPtr)");
+static_assert(sizeof(PackedPtr) == 8, "unexpected sizeof(PackedPtr)");
+static_assert(sizeof(void *) == 8, "unexpected arch");
 }
