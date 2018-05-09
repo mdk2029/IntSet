@@ -2,7 +2,7 @@
 
 A simplified `BTree` like class that provides an ordered collection of 64 bit ints by packing 6 ints into each node.
 
-Please see inline documentation in `kset_node.h` for design details
+Please see inline documentation in `kset/kset_node.h` for design details
 
 ### Building
 

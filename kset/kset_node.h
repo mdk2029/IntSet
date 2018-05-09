@@ -25,15 +25,16 @@
  * A Kset Node will be exactly 64 bytes long and will hold 6 64 bit ints. Since memory
  * accesses usually work on a granularity of 64 byte cache lines, so, we try to
  * use all the fetched memory instead of storing just one 64 bit int in a node as is
- * done in a std::set<int64_t>.
+ * done in a std::set<int64_t>. We will further control memory allocation so that the 64 bytes
+ * line up along a cacheline boundary.
  *
  * So now we have a node with 6 values. We now need 7 "pointers" to descend to the
  * appropriate child node from this node when we are traversing the tree. Instead of
  * actually storing 7 pointers, we will layout all 7 child nodes contiguously and
  * thus need to store only one pointer in our node.
  *
- * The layout is described next. We will further control memory allocation so that the 64 bytes
- * line up along a cache boundary
+ * The layout is described next. 
+
  * x-----8----x-----8----x-----8----x----8-----x----8-----x----8-----x----8-----x----8-----x
  * | childptr |parentptr |   val0   |   val1   |    val2  |   val3   |   val4   |   val5   |
  * x----------x----------x----------x----------x----------x----------x----------x----------x
@@ -42,6 +43,7 @@
  * Since we are dealing with data that is gurarnteed to be in one cache line (which has already been fetched), so
  * there is minimal overhead in maintaining the sorted ordering locally within a node.
  *
+ * childptr:
  * childptr will be pointing to a memory location where we will layout 7 such nodes (i.e. 7x64 bytes).
  * i.e. we have
  *
@@ -50,8 +52,7 @@
  * Thus, suppose we are looking for a value v such that val1 < v < val2. Then, we know that
  * this value must be in the tree rooted at the node (childptr + 3)
  *
- * We now describe parentptr next.
- *
+ * parentptr:
  * We need parentptr because we are going to support the successor() operation. Logically, the parentptr
  * is simple - for all the Node0,Node1 etc described above, the parentptr will be the same since they
  * all have the same parent.
