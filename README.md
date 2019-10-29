@@ -2,11 +2,11 @@
 
 A simplified `BTree` like class that provides an ordered collection of 64 bit ints by packing 6 ints into each node.
 
-Please see inline documentation in `kset/kset_node.h` for design details
+Please see inline documentation in [kset/kset_node.h] for design details
 
 ### Building
 
-Only linux is supported. Check out the `CMakeLists.txt` file for choosing compilers and enabling explicit usage of SIMD instructions `(AVX2)` when finding in a node. Uses `googletest` for unit tests and `google-benchmark` for benchmarks (compared against `std::set<int64_t>`)
+Only linux is supported. Check out the [CMakeLists.txt] file for choosing compilers and enabling explicit usage of SIMD instructions `(AVX2)` when finding in a node. Uses `googletest` for unit tests and `google-benchmark` for benchmarks (compared against `std::set<int64_t>`)
 
 ### Running
 
